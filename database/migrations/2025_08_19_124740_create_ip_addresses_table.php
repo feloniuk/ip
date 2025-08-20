@@ -13,27 +13,45 @@ return new class extends Migration
     {
         Schema::create('ip_addresses', function (Blueprint $table): void {
             $table->id();
-            $table->ipAddress('ip_address')->unique();
-            $table->string('country', 100)->nullable();
-            $table->char('country_code', 2)->nullable();
-            $table->string('region', 10)->nullable();
-            $table->string('region_name', 100)->nullable();
-            $table->string('city', 100)->nullable();
-            $table->string('zip', 20)->nullable();
-            $table->decimal('latitude', 10, 8)->nullable();
-            $table->decimal('longitude', 11, 8)->nullable();
-            $table->string('timezone', 50)->nullable();
-            $table->string('isp', 255)->nullable();
-            $table->string('org', 255)->nullable();
-            $table->string('as', 255)->nullable();
-            $table->json('raw_response')->nullable();
-            $table->timestamp('geo_updated_at')->nullable();
-            $table->foreignId('created_by')->nullable()->constrained('users')->onDelete('set null');
+            
+            // Основні поля IP адреси
+            $table->ipAddress('ip_address')
+                  ->unique()
+                  ->comment('Унікальна IP адреса');
+            
+            // Гео дані
+            $table->string('country', 100)->nullable()->comment('Назва країни');
+            $table->char('country_code', 2)->nullable()->comment('Код країни (ISO 3166-1 alpha-2)');
+            $table->string('region', 100)->nullable()->comment('Код регіону');
+            $table->string('region_name', 100)->nullable()->comment('Назва регіону');
+            $table->string('city', 100)->nullable()->comment('Назва міста');
+            $table->string('zip', 20)->nullable()->comment('Поштовий індекс');
+            
+            // Координати
+            $table->decimal('latitude', 10, 8)->nullable()->comment('Широта (-90 до 90)');
+            $table->decimal('longitude', 11, 8)->nullable()->comment('Довгота (-180 до 180)');
+            
+            // Мережева інформація
+            $table->string('timezone', 50)->nullable()->comment('Часовий пояс');
+            $table->string('isp')->nullable()->comment('Інтернет провайдер');
+            $table->string('org')->nullable()->comment('Організація');
+            $table->string('as')->nullable()->comment('Автономна система');
+            
+            // Метадані
+            $table->json('raw_response')->nullable()->comment('Повна відповідь від геолокаційного API');
+            $table->timestamp('geo_updated_at')->nullable()->comment('Останнє оновлення геоданих');
+            $table->foreignId('created_by')
+                  ->nullable()
+                  ->constrained('users')
+                  ->onDelete('set null')
+                  ->comment('ID користувача, який створив запис');
+            
             $table->timestamps();
             
-            $table->index(['country', 'city']);
-            $table->index('created_by');
-            $table->index('geo_updated_at');
+            // Індекси для оптимізації запитів
+            $table->index(['country', 'city'], 'idx_country_city');
+            $table->index('created_by', 'idx_created_by');
+            $table->index('geo_updated_at', 'idx_geo_updated_at');
         });
     }
 

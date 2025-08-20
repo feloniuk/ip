@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Builder;
+use Carbon\Carbon;
 
 /**
+ * Модель для зберігання IP адрес та їх геолокаційної інформації
+ * 
  * @property int $id
  * @property string $ip_address
  * @property string|null $country
@@ -30,12 +31,21 @@ use Illuminate\Database\Eloquent\Builder;
  * @property int|null $created_by
  * @property Carbon $created_at
  * @property Carbon $updated_at
- * @property-read User|null $creator
  */
 class IpAddress extends Model
 {
     use HasFactory;
 
+    /**
+     * Назва таблиці в базі даних
+     */
+    protected $table = 'ip_addresses';
+
+    /**
+     * Поля, які можна масово заповнювати
+     * 
+     * @var array<string>
+     */
     protected $fillable = [
         'ip_address',
         'country',
@@ -55,31 +65,81 @@ class IpAddress extends Model
         'created_by',
     ];
 
+    /**
+     * Типізація атрибутів моделі
+     * 
+     * @var array<string, string>
+     */
     protected $casts = [
+        'id' => 'integer',
         'latitude' => 'decimal:8',
         'longitude' => 'decimal:8',
         'raw_response' => 'array',
         'geo_updated_at' => 'datetime',
+        'created_by' => 'integer',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
-        'created_by' => 'integer',
     ];
 
+    /**
+     * Приховані атрибути при серіалізації
+     * 
+     * @var array<string>
+     */
+    protected $hidden = [
+        'raw_response', // Приховуємо сирі дані API за замовчуванням
+    ];
+
+    /**
+     * Зв'язок з користувачем, який створив запис
+     */
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    public function scopeByCountry(Builder $query, string $country): Builder
+    /**
+     * Скоуп для фільтрації по країні
+     * 
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param string $country
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeByCountry($query, string $country)
     {
         return $query->where('country', $country);
     }
 
-    public function scopeByCity(Builder $query, string $city): Builder
+    /**
+     * Скоуп для фільтрації по місту
+     * 
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param string $city
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeByCity($query, string $city)
     {
         return $query->where('city', $city);
     }
 
+    /**
+     * Скоуп для отримання IP з застарілими геоданими
+     * 
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param int $daysOld За замовчуванням 30 днів
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeWithOutdatedGeoData($query, int $daysOld = 30)
+    {
+        return $query->where(function ($q) use ($daysOld): void {
+            $q->whereNull('geo_updated_at')
+              ->orWhere('geo_updated_at', '<', now()->subDays($daysOld));
+        });
+    }
+
+    /**
+     * Акцесор для отримання форматованого місцезнаходження
+     */
     public function getLocationAttribute(): string
     {
         $parts = array_filter([
@@ -88,15 +148,39 @@ class IpAddress extends Model
             $this->country
         ]);
         
-        return implode(', ', $parts);
+        return !empty($parts) ? implode(', ', $parts) : 'Unknown Location';
     }
 
-    public function isGeoDataOutdated(): bool
+    /**
+     * Перевіряє, чи є геодані застарілими
+     */
+    public function isGeoDataOutdated(int $daysThreshold = 30): bool
     {
         if ($this->geo_updated_at === null) {
             return true;
         }
 
-        return $this->geo_updated_at->lt(now()->subDays(30));
+        return $this->geo_updated_at->lt(now()->subDays($daysThreshold));
+    }
+
+    /**
+     * Перевіряє, чи є координати доступними
+     */
+    public function hasCoordinates(): bool
+    {
+        return $this->latitude !== null && $this->longitude !== null;
+    }
+
+    /**
+     * Повертає координати у вигляді масиву
+     * 
+     * @return array{latitude: float|null, longitude: float|null}
+     */
+    public function getCoordinates(): array
+    {
+        return [
+            'latitude' => $this->latitude,
+            'longitude' => $this->longitude,
+        ];
     }
 }

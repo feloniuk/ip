@@ -4,14 +4,17 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
+use App\DTOs\StoreIpData;
 use App\Exceptions\GeoLocationException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreIpAddressRequest;
 use App\Http\Requests\UpdateIpAddressRequest;
 use App\Http\Resources\IpAddressCollection;
 use App\Http\Resources\IpAddressResource;
+use App\Http\Resources\IpResource;
 use App\Models\IpAddress;
 use App\Services\GeoLocationService;
+use App\Services\IpService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -28,7 +31,8 @@ class IpAddressController extends Controller
      * Ін'єкція сервісу геолокації через конструктор
      */
     public function __construct(
-        private readonly GeoLocationService $geoLocationService
+        private readonly GeoLocationService $geoLocationService,
+        protected readonly IpService $ipService,
     ) {
         // В новых версиях Laravel middleware настраивается в routes или через атрибуты
     }
@@ -39,13 +43,13 @@ class IpAddressController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        // Перевіряємо дозволи
-        if (!$request->user()->can('view ip addresses')) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Access denied. You do not have permission to view IP addresses.',
-            ], Response::HTTP_FORBIDDEN);
-        }
+//        // Перевіряємо дозволи
+//        if (!$request->user()->can('view ip addresses')) {
+//            return response()->json([
+//                'success' => false,
+//                'message' => 'Access denied. You do not have permission to view IP addresses.',
+//            ], Response::HTTP_FORBIDDEN);
+//        }
 
         // Валідуємо параметри запиту
         $validated = $request->validate([
@@ -108,73 +112,80 @@ class IpAddressController extends Controller
      * Створення нової IP адреси з отриманням геолокації
      * POST /api/v1/ip-addresses
      */
+//    public function store(StoreIpAddressRequest $request): JsonResponse
+//    {
+//        try {
+//            DB::beginTransaction();
+//
+//            $ipAddress = $request->validated('ip_address');
+//
+//            // Отримуємо геолокаційні дані
+//            $geoData = $this->geoLocationService->getGeoLocation($ipAddress);
+//
+//            // Створюємо запис в базі даних
+//            $ipRecord = IpAddress::create([
+//                ...$geoData->toArray(),
+//                'ip_address' => $ipAddress,
+//                'created_by' => $request->user()->id,
+//            ]);
+//
+//            // Завантажуємо зв'язок з користувачем для відповіді
+//            $ipRecord->load('creator');
+//
+//            DB::commit();
+//
+//            Log::info('IP address created successfully', [
+//                'ip_id' => $ipRecord->id,
+//                'ip_address' => $ipAddress,
+//                'location' => $geoData->getFormattedLocation(),
+//                'user_id' => $request->user()->id,
+//            ]);
+//
+//            return response()->json([
+//                'success' => true,
+//                'message' => 'IP address created successfully',
+//                'data' => new IpAddressResource($ipRecord),
+//            ], Response::HTTP_CREATED);
+//
+//        } catch (GeoLocationException $exception) {
+//            DB::rollBack();
+//
+//            Log::warning('Failed to get geolocation for IP address', [
+//                'ip_address' => $ipAddress ?? 'unknown',
+//                'error' => $exception->getMessage(),
+//                'user_id' => $request->user()->id,
+//            ]);
+//
+//            return response()->json([
+//                'success' => false,
+//                'message' => 'Failed to retrieve geolocation data',
+//                'error' => $exception->getMessage(),
+//                'code' => 'GEOLOCATION_ERROR',
+//            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+//
+//        } catch (\Throwable $exception) {
+//            DB::rollBack();
+//
+//            Log::error('Failed to create IP address record', [
+//                'ip_address' => $ipAddress ?? 'unknown',
+//                'error' => $exception->getMessage(),
+//                'user_id' => $request->user()->id,
+//            ]);
+//
+//            return response()->json([
+//                'success' => false,
+//                'message' => 'Internal server error occurred',
+//                'error' => config('app.debug') ? $exception->getMessage() : 'Something went wrong',
+//                'code' => 'INTERNAL_ERROR',
+//            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+//        }
+//    }
+
     public function store(StoreIpAddressRequest $request): JsonResponse
     {
-        try {
-            DB::beginTransaction();
+        $ip = $this->ipService->store(StoreIpData::from($request));
 
-            $ipAddress = $request->validated('ip_address');
-            
-            // Отримуємо геолокаційні дані
-            $geoData = $this->geoLocationService->getGeoLocation($ipAddress);
-            
-            // Створюємо запис в базі даних
-            $ipRecord = IpAddress::create([
-                ...$geoData->toArray(),
-                'ip_address' => $ipAddress,
-                'created_by' => $request->user()->id,
-            ]);
-
-            // Завантажуємо зв'язок з користувачем для відповіді
-            $ipRecord->load('creator');
-
-            DB::commit();
-
-            Log::info('IP address created successfully', [
-                'ip_id' => $ipRecord->id,
-                'ip_address' => $ipAddress,
-                'location' => $geoData->getFormattedLocation(),
-                'user_id' => $request->user()->id,
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'IP address created successfully',
-                'data' => new IpAddressResource($ipRecord),
-            ], Response::HTTP_CREATED);
-
-        } catch (GeoLocationException $exception) {
-            DB::rollBack();
-            
-            Log::warning('Failed to get geolocation for IP address', [
-                'ip_address' => $ipAddress ?? 'unknown',
-                'error' => $exception->getMessage(),
-                'user_id' => $request->user()->id,
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to retrieve geolocation data',
-                'error' => $exception->getMessage(),
-                'code' => 'GEOLOCATION_ERROR',
-            ], Response::HTTP_UNPROCESSABLE_ENTITY);
-
-        } catch (\Throwable $exception) {
-            DB::rollBack();
-            
-            Log::error('Failed to create IP address record', [
-                'ip_address' => $ipAddress ?? 'unknown',
-                'error' => $exception->getMessage(),
-                'user_id' => $request->user()->id,
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Internal server error occurred',
-                'error' => config('app.debug') ? $exception->getMessage() : 'Something went wrong',
-                'code' => 'INTERNAL_ERROR',
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
+        return IpResource::make($ip);
     }
 
     /**
@@ -221,7 +232,7 @@ class IpAddressController extends Controller
 
             // Отримуємо свіжі геолокаційні дані
             $geoData = $this->geoLocationService->getGeoLocation($ipAddress->ip_address);
-            
+
             // Оновлюємо запис
             $ipAddress->update($geoData->toArray());
 

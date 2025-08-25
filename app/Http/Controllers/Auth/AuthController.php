@@ -53,9 +53,6 @@ class AuthController extends Controller
         ]);
     }
 
-    /**
-     * Вихід користувача
-     */
     public function logout(Request $request): JsonResponse
     {
         $request->user()->currentAccessToken()->delete();
@@ -66,9 +63,6 @@ class AuthController extends Controller
         ]);
     }
 
-    /**
-     * Отримання поточного користувача
-     */
     public function me(Request $request): JsonResponse
     {
         $user = $request->user();

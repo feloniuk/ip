@@ -10,12 +10,9 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-// Публічні маршрути автентифікації
 Route::post('login', [AuthController::class, 'login']);
 
-// Захищені маршрути
 //Route::middleware('auth:sanctum')->group(function () {
-    // Автентифікація
     Route::post('logout', [AuthController::class, 'logout']);
     Route::get('me', [AuthController::class, 'me']);
     Route::get('user', function (\Illuminate\Http\Request $request) {

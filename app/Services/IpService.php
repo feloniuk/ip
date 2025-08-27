@@ -21,11 +21,9 @@ final readonly class IpService implements IpServiceInterface
 
     public function store(StoreIpData $data): IpAddress
     {
-        return DB::transaction(function () use ($data) {
-            $geoData = $this->geoService->getGeoLocation($data->ip_address);
-            
-            return $this->model->query()->create($geoData->toArray());
-        });
+        $geoData = $this->geoService->getGeoLocation($data->ip_address);
+        
+        return $this->model->query()->create($geoData->toArray());
     }
 
     public function getAll(array $filters = [], int $perPage = 15): LengthAwarePaginator

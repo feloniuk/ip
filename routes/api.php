@@ -21,6 +21,8 @@ Route::post('login', [AuthController::class, 'login']);
 
     // API v1
     Route::prefix('v1')->group(function () {
+        Route::get('ip-addresses/export', [IpAddressController::class, 'export']);
+
         Route::apiResource('ip-addresses', IpAddressController::class);
     });
 //});

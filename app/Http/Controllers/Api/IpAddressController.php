@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Api;
 use App\DTOs\IndexIpData;
 use App\DTOs\StoreIpData;
 use App\DTOs\UpdateIpData;
+use App\Exports\IpAddressExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreIpAddressRequest;
 use App\Http\Requests\UpdateIpAddressRequest;
@@ -18,6 +19,9 @@ use App\Services\IpService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use App\Jobs\UpdateIpGeolocationJob;
 
 class IpAddressController extends Controller
 {
@@ -61,14 +65,20 @@ class IpAddressController extends Controller
     }
 
     /**
-     * PUT/PATCH /api/v1/ip-addresses/{id}
+     * PUT/PATCH /api/v1/ip-addresses/{ip_address}
      */
-    public function update(UpdateIpAddressRequest $request, IpAddress $ipAddress): AnonymousResourceCollection
+    public function update(UpdateIpAddressRequest $request, IpAddress $ipAddress): IpAddress
     {
         $data = UpdateIpData::from($request);
-        $updatedIp = $this->ipService->update($ipAddress, $data);
 
-        return IpAddressResource::collection($updatedIp);
+        // Start Job
+        UpdateIpGeolocationJob::dispatch($ipAddress->id, $data);
+
+        return $ipAddress->refresh()->load('creator');
+        
+        // $updatedIp = $this->ipService->update($ipAddress, $data);
+
+        // return IpAddressResource::collection($updatedIp);
     }
 
     /**
@@ -82,5 +92,19 @@ class IpAddressController extends Controller
             'success' => true,
             'message' => 'IP address deleted successfully',
         ]);
+    }
+
+    /**
+     * GET /api/v1/ip-addresses/export
+     */
+    public function export(Request $request): BinaryFileResponse
+    {
+        $data = IndexIpData::from($request);
+        $filename = 'ip-addresses-' . now()->format('Y-m-d-H-i-s') . '.xlsx';
+
+        return Excel::download(
+            new IpAddressExport($data->toArray()), 
+            $filename
+        );
     }
 }

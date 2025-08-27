@@ -57,24 +57,24 @@ class IpAddressController extends Controller
     /**
      * GET /api/v1/ip-addresses/{id}
      */
-    public function show(IpAddress $ipAddress): AnonymousResourceCollection
+    public function show(IpAddress $ipAddress): IpAddressResource
     {
         $ip = $this->ipService->getById($ipAddress->id);
 
-        return IpAddressResource::collection($ip);
+        return new IpAddressResource($ip);
     }
 
     /**
-     * PUT/PATCH /api/v1/ip-addresses/{ip_address}
+     * PUT/PATCH /api/v1/ip-addresses/{id}
      */
-    public function update(UpdateIpAddressRequest $request, IpAddress $ipAddress): IpAddress
+    public function update(UpdateIpAddressRequest $request, IpAddress $ipAddress): IpAddressResource
     {
         $data = UpdateIpData::from($request);
 
         // Start Job
-        UpdateIpGeolocationJob::dispatch($ipAddress->id, $data);
+        UpdateIpGeolocationJob::dispatch($ipAddress->id, $data->force_refresh);
 
-        return $ipAddress->refresh()->load('creator');
+        return new IpAddressResource($ipAddress->refresh()->load('creator'));
         
         // $updatedIp = $this->ipService->update($ipAddress, $data);
 

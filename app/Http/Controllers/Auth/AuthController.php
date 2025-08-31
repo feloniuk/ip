@@ -23,8 +23,8 @@ class AuthController extends Controller
         ]);
 
         $userData = $this->authService->login(
-            $request->string('email'),
-            $request->string('password')
+            $request->email,
+            $request->password
         );
 
         $request->session()->regenerate();

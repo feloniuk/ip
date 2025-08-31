@@ -7,12 +7,11 @@ namespace App\Services;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Stringable;
 use Illuminate\Validation\ValidationException;
 
 final class AuthService
 {
-    public function login(Stringable $email, Stringable $password): array
+    public function login(string $email, string $password): array
     {
         if (!Auth::attempt(['email' => $email, 'password' => $password])) {
             throw ValidationException::withMessages([

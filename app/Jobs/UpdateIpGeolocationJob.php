@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Jobs;
 
-use App\Contracts\GeoLocationServiceInterface;
 use App\Models\IpAddress;
+use App\Services\GeoLocationService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -27,7 +27,7 @@ class UpdateIpGeolocationJob implements ShouldQueue
         $this->onQueue('geolocation');
     }
 
-    public function handle(GeoLocationServiceInterface $geoService): void
+    public function handle(GeoLocationService $geoService): void
     {
         $ipAddress = IpAddress::find($this->ipAddressId);
 

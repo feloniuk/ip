@@ -4,32 +4,51 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Contracts\GeoLocationApiInterface;
-use App\DTOs\GeoLocationData;
-use App\Exceptions\GeoLocationException;
-use Illuminate\Support\ServiceProvider;
-use App\Http\Controllers\Auth\AuthController;
-use Illuminate\Support\Facades\Config;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Stringable;
+use Illuminate\Validation\ValidationException;
 
-final class AuthService extends ServiceProvider
+final class AuthService
 {
-    public function __construct(
-        private GeoLocationApiInterface $geoLocationApi
-    ) {}
-
-    public function fetchGeoLocationData(string $ipAddress): GeoLocationData
+    public function login(Stringable $email, Stringable $password): array
     {
-        $this->validateIpAddress($ipAddress);
+        if (!Auth::attempt(['email' => $email, 'password' => $password])) {
+            throw ValidationException::withMessages([
+                'email' => ['The provided credentials are incorrect.'],
+            ]);
+        }
 
-        $apiData = $this->geoLocationApi->fetchGeoLocationData($ipAddress);
+        $user = Auth::user();
 
-        return GeoLocationData::fromApiResponse($apiData, $ipAddress);
+        return [
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'roles' => $user->getRoleNames(),
+                'permissions' => $user->getAllPermissions()->pluck('name'),
+            ]
+        ];
     }
 
-    private function validateIpAddress(string $ipAddress): void
+    public function logout(Request $request): void
     {
-        if (!filter_var($ipAddress, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
-            throw GeoLocationException::invalidIpAddress($ipAddress);
-        }
+        Auth::guard('web')->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+    }
+
+    public function getCurrentUser(User $user): array
+    {
+        return [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'roles' => $user->getRoleNames(),
+            'permissions' => $user->getAllPermissions()->pluck('name'),
+            'created_at' => $user->created_at->toISOString(),
+        ];
     }
 }

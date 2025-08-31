@@ -4,17 +4,15 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Services\GeoLocationService;
+use App\Contracts\IpServiceInterface;
 use App\DTOs\StoreIpData;
 use App\DTOs\UpdateIpData;
 use App\Models\IpAddress;
-use Illuminate\Support\ServiceProvider;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
-final class IpService extends ServiceProvider
+final class IpService
 {
     public function __construct(
-        private IpAddress $model,
         private GeoLocationService $geoService,
     ) {}
 
@@ -22,19 +20,19 @@ final class IpService extends ServiceProvider
     {
         $geoData = $this->geoService->getGeoLocation($data->ip_address);
 
-        return $this->model->query()->create($geoData->toArray());
+        return IpAddress::create($geoData->toArray());
     }
 
     public function getAll(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
-        $query = $this->model->query();
+        $query = IpAddress::query();
 
         if (!empty($filters['country'])) {
-            $query->byCountry($filters['country']);
+            $query->where('country', 'LIKE', "%{$filters['country']}%");
         }
 
         if (!empty($filters['city'])) {
-            $query->byCity($filters['city']);
+            $query->where('city', 'LIKE', "%{$filters['city']}%");
         }
 
         if (!empty($filters['search'])) {
@@ -51,7 +49,7 @@ final class IpService extends ServiceProvider
 
     public function getById(int $id): IpAddress
     {
-        return $this->model->query()->findOrFail($id);
+        return IpAddress::findOrFail($id);
     }
 
     public function update(IpAddress $ipAddress, UpdateIpData $data): IpAddress
@@ -61,7 +59,6 @@ final class IpService extends ServiceProvider
         }
 
         $geoData = $this->geoService->getGeoLocation($ipAddress->ip_address);
-
         $ipAddress->update($geoData->toArray());
 
         return $ipAddress->refresh();
@@ -69,6 +66,7 @@ final class IpService extends ServiceProvider
 
     public function delete(int $id): bool
     {
-        return $this->model->query()->findOrFail($id)->delete();
+        $ipAddress = IpAddress::findOrFail($id);
+        return $ipAddress->delete();
     }
 }

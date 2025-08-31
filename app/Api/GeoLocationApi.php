@@ -19,6 +19,6 @@ final readonly class GeoLocationApi implements GeoLocationApiInterface
     {
         $locationData = $this->geoApiService->fetchGeoLocationData($ipAddress);
 
-        return IpAddressResource::collection($locationData);
+        return IpAddressResource::collection([(object) $locationData]);
     }
 }

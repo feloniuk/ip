@@ -12,26 +12,20 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreIpAddressRequest;
 use App\Http\Requests\UpdateIpAddressRequest;
 use App\Http\Resources\IpAddressResource;
-use App\Http\Resources\IpResource;
+use App\Jobs\UpdateIpGeolocationJob;
 use App\Models\IpAddress;
-use App\Services\GeoLocationService;
 use App\Services\IpService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
-use App\Jobs\UpdateIpGeolocationJob;
 
 class IpAddressController extends Controller
 {
-
     public function __construct(
-        private readonly GeoLocationService $geoLocationService,
         protected readonly IpService $ipService,
-    ) {
-        // В новых версиях Laravel middleware настраивается в routes или через атрибуты
-    }
+    ) {}
 
     /**
      * GET /api/v1/ip-addresses
@@ -39,7 +33,7 @@ class IpAddressController extends Controller
     public function index(Request $request): AnonymousResourceCollection
     {
         $data = IndexIpData::from($request);
-        $ipAddresses = $this->ipService->getAll($data->toArray());
+        $ipAddresses = $this->ipService->getAll($data->toArray(), $data->per_page);
 
         return IpAddressResource::collection($ipAddresses);
     }
@@ -47,11 +41,11 @@ class IpAddressController extends Controller
     /**
      * POST /api/v1/ip-addresses
      */
-    public function store(StoreIpAddressRequest $request): AnonymousResourceCollection
+    public function store(StoreIpAddressRequest $request): IpAddressResource
     {
         $ip = $this->ipService->store(StoreIpData::from($request));
 
-        return IpResource::collection($ip);
+        return new IpAddressResource($ip);
     }
 
     /**
@@ -73,14 +67,11 @@ class IpAddressController extends Controller
 
         if ($data->ip_address) {
             $ipAddress->update(['ip_address' => $data->ip_address]);
+            UpdateIpGeolocationJob::dispatch($ipAddress->id);
+            $ipAddress = $ipAddress->refresh();
         }
 
-        UpdateIpGeolocationJob::dispatch($ipAddress->id);
-
-        return new IpAddressResource($ipAddress->refresh());
-        // $updatedIp = $this->ipService->update($ipAddress, $data);
-
-        // return IpAddressResource::collection($updatedIp);
+        return new IpAddressResource($ipAddress);
     }
 
     /**

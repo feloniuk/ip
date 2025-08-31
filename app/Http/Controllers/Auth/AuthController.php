@@ -8,14 +8,12 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    /**
-     * Авторизація користувача
-     */
     public function login(Request $request): JsonResponse
     {
         $request->validate([
@@ -23,19 +21,14 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
-        $user = User::where('email', $request->email)->first();
-
-        if (!$user || !Hash::check($request->password, $user->password)) {
+        if (!Auth::attempt($request->only('email', 'password'))) {
             throw ValidationException::withMessages([
                 'email' => ['The provided credentials are incorrect.'],
             ]);
         }
 
-        // Видаляємо всі попередні токени
-        $user->tokens()->delete();
-
-        // Створюємо новий токен
-        $token = $user->createToken('api-token')->plainTextToken;
+        $request->session()->regenerate();
+        $user = Auth::user();
 
         return response()->json([
             'success' => true,
@@ -47,15 +40,17 @@ class AuthController extends Controller
                     'email' => $user->email,
                     'roles' => $user->getRoleNames(),
                     'permissions' => $user->getAllPermissions()->pluck('name'),
-                ],
-                'token' => $token,
-            ],
+                ]
+            ]
         ]);
     }
 
     public function logout(Request $request): JsonResponse
     {
-        $request->user()->currentAccessToken()->delete();
+        Auth::guard('web')->logout();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
         return response()->json([
             'success' => true,

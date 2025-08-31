@@ -16,11 +16,8 @@ class AppServiceProvider extends ServiceProvider
      * Register any application services.
      */
     public function register(): void
-    {        
+    {
         $this->app->bind(GeoLocationApiInterface::class, GeoLocationApi::class);
-
-        $this->app->bind(GeoLocationServiceInterface::class, GeoLocationService::class);
-        $this->app->bind(IpServiceInterface::class, IpService::class);
     }
 
     /**

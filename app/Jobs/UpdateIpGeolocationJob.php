@@ -18,7 +18,7 @@ class UpdateIpGeolocationJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $tries = 3;
-    public $backoff = [60, 300, 900]; // 1, 5, 15
+    public $backoff = [60, 300, 900];
 
     public function __construct(
         private readonly int $ipAddressId,
@@ -45,12 +45,7 @@ class UpdateIpGeolocationJob implements ShouldQueue
             ]);
 
         } catch (\Exception $e) {
-            Log::error("Failed to update geolocation for IP {$ipAddress->ip_address}: " . $e->getMessage(), [
-                'ip_id' => $this->ipAddressId,
-                'error' => $e->getMessage()
-            ]);
-            
-            throw $e; // Позволяет джобу попробовать еще раз
+            throw $e;
         }
     }
 

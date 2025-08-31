@@ -12,7 +12,7 @@ class IndexIpData extends Data
         public int $page = 1,
         public ?string $country = null,
         public ?string $city = null,
-        public ?string $search = null,
+        public ?string $search = null
     ) {
     }
 }

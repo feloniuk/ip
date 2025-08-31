@@ -8,6 +8,6 @@ use Spatie\LaravelData\Data;
 class UpdateIpData extends Data
 {
     public function __construct(
-        public bool $force_refresh = false,
+        public ?string $ip_address = null
     ) {}
 }

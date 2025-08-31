@@ -27,7 +27,7 @@ readonly class GeoLocationData
         return !empty($parts) ? implode(', ', $parts) : 'Unknown Location';
     }
 
-    public static function fromApiResponse(array $response, string $ipAddress): self
+    public static function fromApiResponse($response, string $ipAddress): self
     {
         return new self(
             country: $response['country'] ?? null,

@@ -71,11 +71,13 @@ class IpAddressController extends Controller
     {
         $data = UpdateIpData::from($request);
 
-        // Start Job
-        UpdateIpGeolocationJob::dispatch($ipAddress->id, $data->force_refresh);
+        if ($data->ip_address) {
+            $ipAddress->update(['ip_address' => $data->ip_address]);
+        }
 
-        return new IpAddressResource($ipAddress->refresh()->load('creator'));
-        
+        UpdateIpGeolocationJob::dispatch($ipAddress->id);
+
+        return new IpAddressResource($ipAddress->refresh());
         // $updatedIp = $this->ipService->update($ipAddress, $data);
 
         // return IpAddressResource::collection($updatedIp);

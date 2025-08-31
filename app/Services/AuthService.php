@@ -8,27 +8,22 @@ use App\Contracts\GeoLocationApiInterface;
 use App\DTOs\GeoLocationData;
 use App\Exceptions\GeoLocationException;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\Cache;
+use App\Http\Controllers\Auth\AuthController;
 use Illuminate\Support\Facades\Config;
 
-final class GeoLocationService extends ServiceProvider
+final class AuthService extends ServiceProvider
 {
     public function __construct(
         private GeoLocationApiInterface $geoLocationApi
     ) {}
 
-    public function getGeoLocation(string $ipAddress): GeoLocationData
+    public function fetchGeoLocationData(string $ipAddress): GeoLocationData
     {
         $this->validateIpAddress($ipAddress);
 
-        $cacheKey = Config::get('geolocation.cache.prefix') . $ipAddress;
-        $cacheTtl = Config::get('geolocation.cache.ttl');
+        $apiData = $this->geoLocationApi->fetchGeoLocationData($ipAddress);
 
-        return Cache::remember($cacheKey, $cacheTtl, function () use ($ipAddress) {
-            $apiData = $this->geoLocationApi->fetchGeoLocationData($ipAddress);
-
-            return GeoLocationData::fromApiResponse($apiData, $ipAddress);
-        });
+        return GeoLocationData::fromApiResponse($apiData, $ipAddress);
     }
 
     private function validateIpAddress(string $ipAddress): void

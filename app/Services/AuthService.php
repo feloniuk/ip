@@ -12,27 +12,28 @@ use Illuminate\Validation\ValidationException;
 
 final class AuthService
 {
-    public function login(string $email, string $password): array
+    public function login(object $request): array
     {
-        Log::info('Login attempt', ['email' => $email]);
-        
-        if (!Auth::attempt(['email' => $email, 'password' => $password])) {
-            Log::warning('Login failed', ['email' => $email]);
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required',
+        ]);
+
+        if (!Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
             throw ValidationException::withMessages([
                 'email' => ['The provided credentials are incorrect.'],
             ]);
         }
 
         $user = Auth::user();
-        Log::info('Login successful', ['user_id' => $user->id]);
+
+        $request->session()->regenerate();
 
         return [
             'user' => [
                 'id' => $user->id,
                 'name' => $user->name,
-                'email' => $user->email,
-                'roles' => $user->getRoleNames(),
-                'permissions' => $user->getAllPermissions()->pluck('name'),
+                'email' => $user->email
             ]
         ];
     }

@@ -22,7 +22,6 @@ class UpdateIpGeolocationJob implements ShouldQueue
 
     public function __construct(
         private readonly int $ipAddressId,
-        private readonly bool $forceRefresh = false
     ) {
         $this->onQueue('geolocation');
     }

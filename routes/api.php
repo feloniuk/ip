@@ -26,3 +26,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('ip-addresses', IpAddressController::class);
     });
 });
+
+Route::get('/test-session', function () {
+    return response()->json([
+        'session_id' => session()->getId(),
+        'session_started' => session()->isStarted(),
+        'csrf_token' => csrf_token(),
+    ]);
+});

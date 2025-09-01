@@ -64,14 +64,9 @@ class IpAddressController extends Controller
     public function update(UpdateIpAddressRequest $request, IpAddress $ipAddress): IpAddressResource
     {
         $data = UpdateIpData::from($request);
+        $updatedIp = $this->ipService->update($ipAddress, $data);
 
-        if ($data->ip_address) {
-            $ipAddress->update(['ip_address' => $data->ip_address]);
-            UpdateIpGeolocationJob::dispatch($ipAddress->id);
-            $ipAddress = $ipAddress->refresh();
-        }
-
-        return new IpAddressResource($ipAddress);
+        return new IpAddressResource($updatedIp);
     }
 
     /**
@@ -93,11 +88,10 @@ class IpAddressController extends Controller
     public function export(Request $request): BinaryFileResponse
     {
         $data = IndexIpData::from($request);
-        $filename = 'ip-addresses-' . now()->format('Y-m-d-H-i-s') . '.xlsx';
 
         return Excel::download(
             new IpAddressExport($data->toArray()), 
-            $filename
+            'ip-addresses-' . now()->format('Y-m-d-H-i-s') . '.xlsx'
         );
     }
 }

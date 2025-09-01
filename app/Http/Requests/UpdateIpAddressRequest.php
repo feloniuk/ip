@@ -10,21 +10,13 @@ class UpdateIpAddressRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->can('update ip addresses') ?? false;
+        return true;
     }
 
     public function rules(): array
     {
         return [
-            'ip_address' => ['sometimes', 'string', 'ip'],
-            'force_refresh' => ['sometimes', 'boolean'],
+            'ip_address' => ['sometimes', 'string', 'ip']
         ];
-    }
-
-    protected function prepareForValidation(): void
-    {
-        $this->merge([
-            'force_refresh' => $this->boolean('force_refresh', false),
-        ]);
     }
 }

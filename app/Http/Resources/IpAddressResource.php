@@ -20,9 +20,8 @@ class IpAddressResource extends JsonResource
             'ip_address' => $this->ip_address,
             'country' => $this->country,
             'city' => $this->city,
-            'formatted_location' => $this->formatted_location,
-            'created_at' => $this->created_at->toISOString(),
-            'updated_at' => $this->updated_at->toISOString(),
+            'created_at' => $this->created_at?->toISOString(),
+            'updated_at' => $this->updated_at?->toISOString(),
         ];
     }
 }

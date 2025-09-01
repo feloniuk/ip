@@ -53,12 +53,13 @@ final class IpService
 
     public function update(IpAddress $ipAddress, UpdateIpData $data): IpAddress
     {
-        if ($data->ip_address) {
+        if ($data->ip_address && $data->ip_address !== $ipAddress->ip_address) {
             $ipAddress->ip_address = $data->ip_address;
+            
+            $geoData = $this->geoService->getGeoLocation($data->ip_address);
+            
+            $ipAddress->update($geoData->toArray());
         }
-
-        $geoData = $this->geoService->getGeoLocation($ipAddress->ip_address);
-        $ipAddress->update($geoData->toArray());
 
         return $ipAddress->refresh();
     }

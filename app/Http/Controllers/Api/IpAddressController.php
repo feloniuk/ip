@@ -93,11 +93,10 @@ class IpAddressController extends Controller
     public function export(Request $request): BinaryFileResponse
     {
         $data = IndexIpData::from($request);
-        $filename = 'ip-addresses-' . now()->format('Y-m-d-H-i-s') . '.xlsx';
 
         return Excel::download(
             new IpAddressExport($data->toArray()), 
-            $filename
+            'ip-addresses-' . now()->format('Y-m-d-H-i-s') . '.xlsx'
         );
     }
 }

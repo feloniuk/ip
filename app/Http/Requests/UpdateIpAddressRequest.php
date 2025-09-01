@@ -10,7 +10,7 @@ class UpdateIpAddressRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->can('update ip addresses') ?? false;
+        return true;
     }
 
     public function rules(): array

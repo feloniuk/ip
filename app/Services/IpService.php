@@ -27,20 +27,15 @@ final class IpService
         $query = IpAddress::query();
 
         if (!empty($filters['country'])) {
-            $query->where('country', 'LIKE', "%{$filters['country']}%");
+            $query->byCountry($filters['country']);
         }
 
         if (!empty($filters['city'])) {
-            $query->where('city', 'LIKE', "%{$filters['city']}%");
+            $query->byCity($filters['city']);
         }
 
         if (!empty($filters['search'])) {
-            $query->where(function ($q) use ($filters) {
-                $search = $filters['search'];
-                $q->where('ip_address', 'LIKE', "%{$search}%")
-                  ->orWhere('country', 'LIKE', "%{$search}%")
-                  ->orWhere('city', 'LIKE', "%{$search}%");
-            });
+            $query->search($filters['search']);
         }
 
         return $query->latest('created_at')->paginate($perPage);
@@ -54,11 +49,13 @@ final class IpService
     public function update(IpAddress $ipAddress, UpdateIpData $data): IpAddress
     {
         if ($data->ip_address && $data->ip_address !== $ipAddress->ip_address) {
-            $ipAddress->ip_address = $data->ip_address;
-            
             $geoData = $this->geoService->getGeoLocation($data->ip_address);
             
-            $ipAddress->update($geoData->toArray());
+            $ipAddress->update([
+                'ip_address' => $data->ip_address,
+                'country' => $geoData->country,
+                'city' => $geoData->city,
+            ]);
         }
 
         return $ipAddress->refresh();

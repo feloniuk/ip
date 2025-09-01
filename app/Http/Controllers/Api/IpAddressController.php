@@ -61,12 +61,12 @@ class IpAddressController extends Controller
     /**
      * PUT/PATCH /api/v1/ip-addresses/{id}
      */
-    public function update(UpdateIpAddressRequest $request, IpAddress $ipAddress): IpAddressResource
+    public function update(UpdateIpAddressRequest $request, IpAddress $ipAddress): AnonymousResourceCollection
     {
         $data = UpdateIpData::from($request);
         $updatedIp = $this->ipService->update($ipAddress, $data);
 
-        return new IpAddressResource($updatedIp);
+        return IpAddressResource::collection($updatedIp);
     }
 
     /**

@@ -29,8 +29,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(\App\Services\GeoLocationService::class, function ($app) {
             return new \App\Services\GeoLocationService(
                 $app->make(GeoLocationApiInterface::class),
-                $app->make(GeoLocationException::class),
-                $app->make(GeoLocationData::class)
+                $app->make(GeoLocationException::class)
             );
         });
 

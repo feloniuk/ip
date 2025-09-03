@@ -12,8 +12,7 @@ final class GeoLocationService
 {
     public function __construct(
         private GeoLocationApiInterface $geoLocationApi,
-        protected GeoLocationException $geoLocationException,
-        protected GeoLocationData $geoLocationData
+        protected GeoLocationException $geoLocationException
     ) {}
 
     public function getGeoLocation(string $ipAddress): GeoLocationData
@@ -21,11 +20,10 @@ final class GeoLocationService
         $this->validateIpAddress($ipAddress);
 
         $apiData = $this->geoLocationApi->fetchGeoLocationData($ipAddress);
-
         $dataArray = $apiData->toArray(request())['data'] ?? [];
         $firstItem = $dataArray[0] ?? [];
 
-        return new $this->geoLocationData($firstItem['country'] ?? null,
+        return new GeoLocationData($firstItem['country'] ?? null,
         $firstItem['city'] ?? null,
         $ipAddress);
     }

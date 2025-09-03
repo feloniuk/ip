@@ -19,16 +19,12 @@ final class IpService
 {
     public function __construct(
         private readonly GeoLocationService $geoService,
-        private readonly IpAddress $ipModel,
-        private readonly StoreIpData $ipStoreDto,
-        private readonly IndexIpData $ipIndexDto,
-        private readonly UpdateIpData $ipUpdateDto,
-        private readonly GeoLocationData $GeoLocationDto
+        private readonly IpAddress $ipModel
     ) {}
 
     public function store(StoreIpAddressRequest $request): IpAddress
     {
-        $data = $this->ipStoreDto->from($request);
+        $data = $this->ipModel->from($request);
         $geoData = $this->geoService->getGeoLocation($data->ip_address);
 
         return $this->ipModel->create($geoData->toArray());
@@ -36,7 +32,7 @@ final class IpService
 
     public function getAll(IndexIpAddressRequest $request): LengthAwarePaginator
     {
-        $filters = $this->ipIndexDto->from($request);
+        $filters = $this->ipModel->from($request);
         $query = $this->ipModel->filter($filters);
 
         return $query->latest('created_at')->paginate($filters->per_page);
@@ -55,7 +51,7 @@ final class IpService
 
     public function update(int $id, UpdateIpAddressRequest $request): IpAddress
     {
-        $data = $this->ipUpdateDto->from($request);
+        $data = $this->ipModel->from($request);
         $ipAddress = $this->getById($id);
 
         if ($data->ip_address && $data->ip_address !== $ipAddress->ip_address) {

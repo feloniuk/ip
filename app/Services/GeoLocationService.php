@@ -20,18 +20,14 @@ final class GeoLocationService
     {
         $this->validateIpAddress($ipAddress);
 
-        $cacheKey = Config::get('geolocation.cache.prefix', 'geo:ip:') . $ipAddress;
-        $cacheTtl = Config::get('geolocation.cache.ttl', 3600);
+        $apiData = $this->geoLocationApi->fetchGeoLocationData($ipAddress);
 
-        return Cache::remember($cacheKey, $cacheTtl, function () use ($ipAddress) {
-            $apiData = $this->geoLocationApi->fetchGeoLocationData($ipAddress);
+        $dataArray = $apiData->toArray(request())['data'] ?? [];
+        $firstItem = $dataArray[0] ?? [];
 
-            // Преобразуем ResourceCollection в массив
-            $dataArray = $apiData->toArray(request())['data'] ?? [];
-            $firstItem = $dataArray[0] ?? [];
-
-            return GeoLocationData::fromApiResponse($firstItem, $ipAddress);
-        });
+        return new GeoLocationData($firstItem['country'] ?? null,
+        $firstItem['city'] ?? null,
+        $ipAddress);
     }
 
     private function validateIpAddress(string $ipAddress): void

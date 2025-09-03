@@ -4,37 +4,33 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
-use App\DTOs\IndexIpData;
-use App\DTOs\StoreIpData;
-use App\DTOs\UpdateIpData;
-use App\Exports\IpAddressExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreIpAddressRequest;
 use App\Http\Requests\UpdateIpAddressRequest;
+use App\Http\Requests\IndexIpAddressRequest;
+use App\Http\Requests\ExportIpAddressRequest;
 use App\Http\Resources\IpAddressResource;
-use App\Jobs\UpdateIpGeolocationJob;
-use App\Models\IpAddress;
 use App\Services\IpService;
+use App\Services\ExportService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Illuminate\Contracts\Routing\ResponseFactory;
 
 class IpAddressController extends Controller
 {
     public function __construct(
-        protected readonly IpService $ipService,
+        private readonly IpService $ipService,
+        private readonly ExportService $exportService,
+        private readonly ResponseFactory $response
     ) {}
 
     /**
      * GET /api/v1/ip-addresses
      */
-    public function index(Request $request): AnonymousResourceCollection
+    public function index(IndexIpAddressRequest $request): AnonymousResourceCollection
     {
-        $data = IndexIpData::from($request);
-        $ipAddresses = $this->ipService->getAll($data->toArray(), $data->per_page);
-
+        $ipAddresses = $this->ipService->getAll($request);
         return IpAddressResource::collection($ipAddresses);
     }
 
@@ -43,40 +39,36 @@ class IpAddressController extends Controller
      */
     public function store(StoreIpAddressRequest $request): IpAddressResource
     {
-        $ip = $this->ipService->store(StoreIpData::from($request));
-
+        $ip = $this->ipService->store($request);
         return new IpAddressResource($ip);
     }
 
     /**
      * GET /api/v1/ip-addresses/{id}
      */
-    public function show(IpAddress $ipAddress): IpAddressResource
+    public function show(int $id): IpAddressResource
     {
-        $ip = $this->ipService->getById($ipAddress->id);
-
-        return new IpAddressResource($ip);
+        $ipAddress = $this->ipService->getById($id);
+        return new IpAddressResource($ipAddress);
     }
 
     /**
      * PUT/PATCH /api/v1/ip-addresses/{id}
      */
-    public function update(UpdateIpAddressRequest $request, IpAddress $ipAddress): AnonymousResourceCollection
+    public function update(UpdateIpAddressRequest $request, int $id): IpAddressResource
     {
-        $data = UpdateIpData::from($request);
-        $updatedIp = $this->ipService->update($ipAddress, $data);
-
-        return IpAddressResource::collection($updatedIp);
+        $updatedIp = $this->ipService->update($id, $request);
+        return new IpAddressResource($updatedIp);
     }
 
     /**
      * DELETE /api/v1/ip-addresses/{id}
      */
-    public function destroy(IpAddress $ipAddress): JsonResponse
+    public function destroy(int $id): JsonResponse
     {
-        $this->ipService->delete($ipAddress->id);
+        $this->ipService->delete($id);
 
-        return response()->json([
+        return $this->response->json([
             'success' => true,
             'message' => 'IP address deleted successfully',
         ]);
@@ -85,13 +77,8 @@ class IpAddressController extends Controller
     /**
      * GET /api/v1/ip-addresses/export
      */
-    public function export(Request $request): BinaryFileResponse
+    public function export(ExportIpAddressRequest $request): BinaryFileResponse
     {
-        $data = IndexIpData::from($request);
-
-        return Excel::download(
-            new IpAddressExport($data->toArray()), 
-            'ip-addresses-' . now()->format('Y-m-d-H-i-s') . '.xlsx'
-        );
+        return $this->exportService->exportIpAddresses($request);
     }
 }

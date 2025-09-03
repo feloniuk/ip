@@ -6,19 +6,24 @@ namespace App\Services;
 
 use App\Exceptions\GeoLocationException;
 use Illuminate\Http\Client\RequestException;
-use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Http;
+use Illuminate\Http\Client\Factory as HttpFactory;
+use Illuminate\Contracts\Config\Repository as ConfigRepository;
 
 final class GeoLocationApiService
 {
+    public function __construct(
+        private readonly HttpFactory $http,
+        private readonly ConfigRepository $config
+    ) {}
+
     public function fetchGeoLocationData(string $ipAddress): array
     {
-        $url = Config::get('geolocation.api.url', 'http://ip-api.com/json/') . $ipAddress;
-        $timeout = Config::get('geolocation.api.timeout', 10);
-        $retryAttempts = Config::get('geolocation.api.retry_attempts', 3);
+        $url = $this->config->get('geolocation.api.url', 'http://ip-api.com/json/') . $ipAddress;
+        $timeout = $this->config->get('geolocation.api.timeout', 10);
+        $retryAttempts = $this->config->get('geolocation.api.retry_attempts', 3);
 
         try {
-            $response = Http::timeout($timeout)
+            $response = $this->http->timeout($timeout)
                 ->retry($retryAttempts, 1000)
                 ->get($url);
 

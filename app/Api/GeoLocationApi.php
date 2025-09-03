@@ -12,13 +12,15 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 final readonly class GeoLocationApi implements GeoLocationApiInterface
 {
     public function __construct(
-        protected GeoLocationApiService $geoApiService,
+        private GeoLocationApiService $geoApiService,
     ) {}
 
     public function fetchGeoLocationData(string $ipAddress): AnonymousResourceCollection
     {
         $locationData = $this->geoApiService->fetchGeoLocationData($ipAddress);
 
-        return IpAddressResource::collection([(object) $locationData]);
+        return IpAddressResource::collection([
+            (object) $locationData
+        ]);
     }
 }

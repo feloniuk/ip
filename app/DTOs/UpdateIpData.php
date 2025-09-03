@@ -8,6 +8,7 @@ use Spatie\LaravelData\Data;
 class UpdateIpData extends Data
 {
     public function __construct(
-        public ?string $ip_address = null
+        public ?string $ip_address = null,
+        public int $id
     ) {}
 }

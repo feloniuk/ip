@@ -6,6 +6,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use EloquentFilter\Filterable;
 use Carbon\Carbon;
 
 /**
@@ -18,7 +19,7 @@ use Carbon\Carbon;
  */
 class IpAddress extends Model
 {
-    use HasFactory;
+    use HasFactory, Filterable;
 
     protected $fillable = [
         'ip_address',

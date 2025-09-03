@@ -7,24 +7,28 @@ namespace App\Services;
 use App\DTOs\StoreIpData;
 use App\DTOs\UpdateIpData;
 use App\DTOs\IndexIpData;
+use App\DTOs\GeoLocationData;
 use App\Models\IpAddress;
 use App\Http\Requests\StoreIpAddressRequest;
 use App\Http\Requests\UpdateIpAddressRequest;
 use App\Http\Requests\IndexIpAddressRequest;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 final class IpService
 {
     public function __construct(
         private readonly GeoLocationService $geoService,
-        private readonly IpAddress $ipModel
+        private readonly IpAddress $ipModel,
+        private readonly StoreIpData $ipStoreDto,
+        private readonly IndexIpData $ipIndexDto,
+        private readonly UpdateIpData $ipUpdateDto,
+        private readonly GeoLocationData $GeoLocationDto
     ) {}
 
     public function store(StoreIpAddressRequest $request): IpAddress
     {
-        $data = StoreIpData::from($request);
+        $data = $this->ipStoreDto->from($request);
         $geoData = $this->geoService->getGeoLocation($data->ip_address);
 
         return $this->ipModel->create($geoData->toArray());
@@ -32,8 +36,8 @@ final class IpService
 
     public function getAll(IndexIpAddressRequest $request): LengthAwarePaginator
     {
-        $filters = IndexIpData::from($request);
-        $query = $this->buildQuery($filters);
+        $filters = $this->ipIndexDto->from($request);
+        $query = $this->ipModel->filter($filters);
 
         return $query->latest('created_at')->paginate($filters->per_page);
     }
@@ -51,7 +55,7 @@ final class IpService
 
     public function update(int $id, UpdateIpAddressRequest $request): IpAddress
     {
-        $data = UpdateIpData::from($request);
+        $data = $this->ipUpdateDto->from($request);
         $ipAddress = $this->getById($id);
 
         if ($data->ip_address && $data->ip_address !== $ipAddress->ip_address) {
@@ -69,26 +73,6 @@ final class IpService
 
     public function delete(int $id): int
     {
-        $ipAddress = $this->getById($id);
-        return $ipAddress->delete();
-    }
-
-    private function buildQuery(IndexIpData $filters): Builder
-    {
-        $query = $this->ipModel->newQuery();
-
-        if ($filters->country) {
-            $query->byCountry($filters->country);
-        }
-
-        if ($filters->city) {
-            $query->byCity($filters->city);
-        }
-
-        if ($filters->search) {
-            $query->search($filters->search);
-        }
-
-        return $query;
+        return $this->getById($id)->delete();
     }
 }

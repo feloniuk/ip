@@ -6,24 +6,20 @@ use App\Api\GeoLocationApi;
 use App\Contracts\GeoLocationApiInterface;
 use App\Models\IpAddress;
 use Illuminate\Support\ServiceProvider;
+use App\DTOs\GeoLocationData;
+use App\Exceptions\GeoLocationException;
 use Illuminate\Http\Client\Factory as HttpFactory;
 use Illuminate\Contracts\Cache\Repository as CacheRepository;
 use Illuminate\Contracts\Config\Repository as ConfigRepository;
-use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Contracts\Validation\Factory as ValidationFactory;
-use Illuminate\Contracts\Routing\ResponseFactory;
 use Psr\Log\LoggerInterface;
 use Maatwebsite\Excel\Excel as ExcelWriter;
 use Illuminate\Support\Carbon;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
     public function register(): void
     {
-        // API интерфейс
         $this->app->bind(GeoLocationApiInterface::class, GeoLocationApi::class);
 
         $this->app->bind(IpAddress::class, function ($app) {
@@ -33,8 +29,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(\App\Services\GeoLocationService::class, function ($app) {
             return new \App\Services\GeoLocationService(
                 $app->make(GeoLocationApiInterface::class),
-                $app->make(CacheRepository::class),
-                $app->make(ConfigRepository::class)
+                $app->make(GeoLocationException::class),
+                $app->make(GeoLocationData::class)
             );
         });
 
@@ -54,7 +50,6 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->bind(\App\Services\AuthService::class, function ($app) {
             return new \App\Services\AuthService(
-                $app->make(Guard::class),
                 $app->make(LoggerInterface::class),
                 $app->make(ValidationFactory::class)
             );
@@ -68,9 +63,6 @@ class AppServiceProvider extends ServiceProvider
         });
     }
 
-    /**
-     * Bootstrap any application services.
-     */
     public function boot(): void
     {
         //

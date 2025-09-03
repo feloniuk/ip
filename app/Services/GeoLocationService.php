@@ -7,13 +7,13 @@ namespace App\Services;
 use App\Contracts\GeoLocationApiInterface;
 use App\DTOs\GeoLocationData;
 use App\Exceptions\GeoLocationException;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Config;
 
 final class GeoLocationService
 {
     public function __construct(
-        private GeoLocationApiInterface $geoLocationApi
+        private GeoLocationApiInterface $geoLocationApi,
+        protected GeoLocationException $geoLocationException,
+        protected GeoLocationData $geoLocationData
     ) {}
 
     public function getGeoLocation(string $ipAddress): GeoLocationData
@@ -25,7 +25,7 @@ final class GeoLocationService
         $dataArray = $apiData->toArray(request())['data'] ?? [];
         $firstItem = $dataArray[0] ?? [];
 
-        return new GeoLocationData($firstItem['country'] ?? null,
+        return new $this->geoLocationData($firstItem['country'] ?? null,
         $firstItem['city'] ?? null,
         $ipAddress);
     }
@@ -33,7 +33,7 @@ final class GeoLocationService
     private function validateIpAddress(string $ipAddress): void
     {
         if (!filter_var($ipAddress, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
-            throw GeoLocationException::invalidIpAddress($ipAddress);
+            throw $this->geoLocationException->invalidIpAddress($ipAddress);
         }
     }
 }

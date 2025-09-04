@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Contracts;
 
-use Illuminate\Http\Resources\Json\ResourceCollection;
+use App\DTOs\GeoLocationData;
 
 interface GeoLocationApiInterface
 {
     /**
      * @param string $ipAddress
-     * @return ResourceCollection API Data
+     * @return GeoLocationData
      * @throws \App\Exceptions\GeoLocationException
      */
-    public function fetchGeoLocationData(string $ipAddress): ResourceCollection;
+    public function fetchGeoLocationData(string $ipAddress): GeoLocationData;
 }

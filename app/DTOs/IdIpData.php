@@ -5,10 +5,9 @@ namespace App\DTOs;
 
 use Spatie\LaravelData\Data;
 
-class LoginData extends Data
+class IdIpData extends Data
 {
     public function __construct(
-        public string $email,
-        public string $password
+        public int $id
     ) {}
 }

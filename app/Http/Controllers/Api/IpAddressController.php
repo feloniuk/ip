@@ -6,10 +6,14 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\DTOs\UpdateIpData;
+use App\DTOs\StoreIpData;
+use App\DTOs\IdIpData;
 use App\Http\Requests\StoreIpAddressRequest;
 use App\Http\Requests\UpdateIpAddressRequest;
 use App\Http\Requests\IndexIpAddressRequest;
 use App\Http\Requests\ExportIpAddressRequest;
+use App\Http\Requests\DeleteIpAddressRequest;
+use App\Http\Requests\ShowIpAddressRequest;
 use App\Http\Resources\IpAddressResource;
 use App\Services\IpService;
 use App\Services\ExportService;
@@ -40,16 +44,16 @@ class IpAddressController extends Controller
      */
     public function store(StoreIpAddressRequest $request): IpAddressResource
     {
-        $ip = $this->ipService->store($request);
+        $ip = $this->ipService->store(new StoreIpData($request->get('ip_address')));
         return new IpAddressResource($ip);
     }
 
     /**
      * GET /api/v1/ip-addresses/{id}
      */
-    public function show(int $id): IpAddressResource
+    public function show(ShowIpAddressRequest $request): IpAddressResource
     {
-        $ipAddress = $this->ipService->getById($id);
+        $ipAddress = $this->ipService->getById($request->get('ip_address'));
         return new IpAddressResource($ipAddress);
     }
 
@@ -65,9 +69,11 @@ class IpAddressController extends Controller
     /**
      * DELETE /api/v1/ip-addresses/{id}
      */
-    public function destroy(int $id): JsonResponse
+    public function destroy(DeleteIpAddressRequest $request): JsonResponse
     {
-        $this->ipService->delete($id);
+        $this->ipService->delete(
+            new IdIpData($request->getValidatedId())
+        );
 
         return $this->response->json([
             'success' => true,

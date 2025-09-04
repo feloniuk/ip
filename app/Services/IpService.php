@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\DTOs\GeoLocationData;
 use App\DTOs\StoreIpData;
 use App\DTOs\UpdateIpData;
 use App\DTOs\IndexIpData;
+use App\DTOs\IdIpData;
 use App\Models\IpAddress;
 use App\Http\Requests\StoreIpAddressRequest;
 use App\Http\Requests\UpdateIpAddressRequest;
@@ -21,12 +23,11 @@ final class IpService
         private readonly IpAddress $ipAddress
     ) {}
 
-    public function store(StoreIpAddressRequest $request): IpAddress
+    public function store(StoreIpData $storeData): IpAddress
     {
-        $data = StoreIpData::from($request);
-        $geoData = $this->geoService->getGeoLocation($data->ip_address);
+        $geoData = $this->geoService->getGeoLocation($storeData->ip_address);
 
-        return IpAddress::create($geoData->toArray());
+        return $this->ipAddress->create($geoData);
     }
 
     public function getAll(IndexIpAddressRequest $request): LengthAwarePaginator
@@ -49,12 +50,12 @@ final class IpService
         return $query->latest('created_at')->paginate($filters->per_page);
     }
 
-    public function getById(int $id): IpAddress
+    public function getById(IdIpData $data): IpAddress
     {
-        $ipAddress = $this->ipAddress->find($id);
+        $ipAddress = $this->ipAddress->find($data->id);
 
         if (!$ipAddress) {
-            throw new ModelNotFoundException("IP address with ID {$id} not found");
+            throw new ModelNotFoundException("IP address with ID {$data->id} not found");
         }
 
         return $ipAddress;
@@ -77,8 +78,9 @@ final class IpService
         return $ipAddress->refresh();
     }
 
-    public function delete(int $id): int
+    public function delete(IdIpData $data): bool
     {
-        return $this->getById($id)->delete();
+        $ipAddress = $this->getById($data->id);
+        return (bool) $ipAddress->delete();
     }
 }

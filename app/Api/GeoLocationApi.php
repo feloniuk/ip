@@ -6,8 +6,7 @@ namespace App\Api;
 
 use App\Contracts\GeoLocationApiInterface;
 use App\Services\GeoLocationApiService;
-use App\Http\Resources\IpAddressResource;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use App\DTOs\GeoLocationData;
 
 final readonly class GeoLocationApi implements GeoLocationApiInterface
 {
@@ -15,12 +14,14 @@ final readonly class GeoLocationApi implements GeoLocationApiInterface
         private GeoLocationApiService $geoApiService,
     ) {}
 
-    public function fetchGeoLocationData(string $ipAddress): AnonymousResourceCollection
+    public function fetchGeoLocationData(string $ipAddress): GeoLocationData
     {
-        $locationData = $this->geoApiService->fetchGeoLocationData($ipAddress);
-
-        return IpAddressResource::collection([
-            (object) $locationData
-        ]);
+        $apiResponse = $this->geoApiService->fetchGeoLocationData($ipAddress);
+        
+        return new GeoLocationData(
+            country: $apiResponse['country'] ?? null,
+            city: $apiResponse['city'] ?? null,
+            ip_address: $ipAddress
+        );
     }
 }

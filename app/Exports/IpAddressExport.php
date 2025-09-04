@@ -20,7 +20,7 @@ class IpAddressExport implements FromQuery, WithHeadings, WithMapping, ShouldAut
         private readonly array $filters = []
     ) {}
 
-    public function query(): Builder
+    public function query()
     {
         $query = IpAddress::query();
 
@@ -64,10 +64,7 @@ class IpAddressExport implements FromQuery, WithHeadings, WithMapping, ShouldAut
             $ipAddress->id,
             $ipAddress->ip_address,
             $ipAddress->country ?? 'N/A',
-            $ipAddress->city ?? 'N/A',
-            $ipAddress->formatted_location,
-            $ipAddress->created_at->format('Y-m-d H:i:s'),
-            $ipAddress->updated_at->format('Y-m-d H:i:s'),
+            $ipAddress->city ?? 'N/A'
         ];
     }
 }

@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Services\AuthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\Auth\LoginRequest;
 
 class AuthController extends Controller
 {
@@ -15,9 +16,8 @@ class AuthController extends Controller
         private readonly AuthService $authService
     ) {}
 
-    public function login(Request $request): JsonResponse
+    public function login(LoginRequest $request): JsonResponse
     {
-    
         $userData = $this->authService->login($request);
 
         return response()->json([

@@ -49,10 +49,10 @@ final class IpService
         return $ipAddress;
     }
 
-    public function update(int $id, UpdateIpAddressRequest $request): IpAddress
+    public function update(UpdateIpData $request): IpAddress
     {
         $data = $this->ipModel->from($request);
-        $ipAddress = $this->getById($id);
+        $ipAddress = $this->getById($request->id);
 
         if ($data->ip_address && $data->ip_address !== $ipAddress->ip_address) {
             $geoData = $this->geoService->getGeoLocation($data->ip_address);

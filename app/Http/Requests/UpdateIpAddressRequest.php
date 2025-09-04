@@ -13,10 +13,18 @@ class UpdateIpAddressRequest extends FormRequest
         return true;
     }
 
+    public function prepareForValidation(): viod
+    {
+        $this->merge([
+            'id' => $this->route('id')
+        ]);
+    }
+
     public function rules(): array
     {
         return [
-            'ip_address' => ['sometimes', 'string', 'ip']
+            'ip_address' => ['sometimes', 'string', 'ip'],
+            'id' => ['required', 'integer']
         ];
     }
 }

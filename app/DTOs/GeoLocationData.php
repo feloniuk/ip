@@ -26,13 +26,4 @@ readonly class GeoLocationData
         $parts = array_filter([$this->city, $this->country]);
         return !empty($parts) ? implode(', ', $parts) : 'Unknown Location';
     }
-
-    public static function fromApiResponse($response, string $ipAddress): self
-    {
-        return new self(
-            country: $response['country'] ?? null,
-            city: $response['city'] ?? null,
-            ip_address: $ipAddress
-        );
-    }
 }

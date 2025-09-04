@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\User;
+use App\DTOs\Auth\LoginData;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
+use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Contracts\Session\Session;
 use Illuminate\Contracts\Validation\Factory as ValidationFactory;
 use Psr\Log\LoggerInterface;
@@ -19,12 +21,8 @@ final class AuthService
         private readonly ValidationFactory $validator
     ) {}
 
-    public function login(Request $request): array
+    public function login(LoginRequest $request): array
     {
-        $this->validator->make($request->all(), [
-            'email' => 'required|email',
-            'password' => 'required',
-        ])->validate();
 
         if (!Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
             throw ValidationException::withMessages([
@@ -46,12 +44,8 @@ final class AuthService
 
     public function logout(Request $request): void
     {
-        $this->logger->info('Logout attempt');
-
         Auth::logout();
         $this->invalidateSession($request->session());
-
-        $this->logger->info('Logout successful');
     }
 
     public function getCurrentUser(User $user): array

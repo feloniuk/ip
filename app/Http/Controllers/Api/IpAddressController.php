@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\DTOs\UpdateIpData;
 use App\Http\Requests\StoreIpAddressRequest;
 use App\Http\Requests\UpdateIpAddressRequest;
 use App\Http\Requests\IndexIpAddressRequest;
@@ -55,9 +56,9 @@ class IpAddressController extends Controller
     /**
      * PUT/PATCH /api/v1/ip-addresses/{id}
      */
-    public function update(UpdateIpAddressRequest $request, int $id): IpAddressResource
+    public function update(UpdateIpAddressRequest $request): IpAddressResource
     {
-        $updatedIp = $this->ipService->update($id, $request);
+        $updatedIp = $this->ipService->update(new UpdateIpData($request->get('ip_address'), $id));
         return new IpAddressResource($updatedIp);
     }
 

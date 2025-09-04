@@ -23,11 +23,16 @@ final class IpService
         private readonly IpAddress $ipAddress
     ) {}
 
-    public function store(StoreIpData $storeData): IpAddress
+    public function store(StoreIpData $request): IpAddress
     {
-        $geoData = $this->geoService->getGeoLocation($storeData->ip_address);
+        $existingIp = $this->ipAddress->where('ip_address', $request->ip_address)->first();
+        if ($existingIp) {
+            throw new \InvalidArgumentException("IP address already exists: {$request->ip_address}");
+        }
 
-        return $this->ipAddress->create($geoData);
+        $geoData = $this->geoService->getGeoLocation($request->ip_address);
+
+        return $this->ipAddress->query()->create($geoData->toArray());
     }
 
     public function getAll(IndexIpAddressRequest $request): LengthAwarePaginator

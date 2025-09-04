@@ -14,14 +14,13 @@ use Illuminate\Support\Carbon;
 final class ExportService
 {
     public function __construct(
-        private readonly ExcelWriter $excel,
-        private readonly Carbon $carbon
+        private readonly ExcelWriter $excel
     ) {}
 
     public function exportIpAddresses(ExportIpAddressRequest $request): BinaryFileResponse
     {
-        $filters = IndexIpData::from($request);
-        $fileName = 'ip-addresses-' . $this->carbon->now()->format('Y-m-d-H-i-s') . '.xlsx';
+        $filters = (new IndexIpData())->from($request);
+        $fileName = 'ip-addresses-' . (new Carbon())->now()->format('Y-m-d-H-i-s') . '.xlsx';
 
         return $this->excel->download(
             new IpAddressExport($filters->toArray()),

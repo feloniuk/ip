@@ -7,7 +7,6 @@ namespace App\Services;
 use App\DTOs\StoreIpData;
 use App\DTOs\UpdateIpData;
 use App\DTOs\IndexIpData;
-use App\DTOs\GeoLocationData;
 use App\Models\IpAddress;
 use App\Http\Requests\StoreIpAddressRequest;
 use App\Http\Requests\UpdateIpAddressRequest;
@@ -19,28 +18,40 @@ final class IpService
 {
     public function __construct(
         private readonly GeoLocationService $geoService,
-        private readonly IpAddress $ipModel
+        private readonly IpAddress $ipAddress
     ) {}
 
     public function store(StoreIpAddressRequest $request): IpAddress
     {
-        $data = $this->ipModel->from($request);
+        $data = StoreIpData::from($request);
         $geoData = $this->geoService->getGeoLocation($data->ip_address);
 
-        return $this->ipModel->create($geoData->toArray());
+        return IpAddress::create($geoData->toArray());
     }
 
     public function getAll(IndexIpAddressRequest $request): LengthAwarePaginator
     {
-        $filters = $this->ipModel->from($request);
-        $query = $this->ipModel->filter($filters);
+        $filters = IndexIpData::from($request);
+        $query = new IpAddress();
+
+        if ($filters->country) {
+            $query = $query->byCountry($filters->country);
+        }
+
+        if ($filters->city) {
+            $query = $query->byCity($filters->city);
+        }
+
+        if ($filters->search) {
+            $query = $query->search($filters->search);
+        }
 
         return $query->latest('created_at')->paginate($filters->per_page);
     }
 
     public function getById(int $id): IpAddress
     {
-        $ipAddress = $this->ipModel->find($id);
+        $ipAddress = $this->ipAddress->find($id);
 
         if (!$ipAddress) {
             throw new ModelNotFoundException("IP address with ID {$id} not found");
@@ -49,10 +60,9 @@ final class IpService
         return $ipAddress;
     }
 
-    public function update(UpdateIpData $request): IpAddress
+    public function update(UpdateIpData $data): IpAddress
     {
-        $data = $this->ipModel->from($request);
-        $ipAddress = $this->getById($request->id);
+        $ipAddress = $this->getById($data->id);
 
         if ($data->ip_address && $data->ip_address !== $ipAddress->ip_address) {
             $geoData = $this->geoService->getGeoLocation($data->ip_address);

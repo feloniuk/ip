@@ -15,4 +15,15 @@ class IndexIpData extends Data
         public ?string $search = null
     ) {
     }
+
+    public function mapToIndexIpData(array $data): IndexIpData
+    {
+        return new self(
+            per_page: $data['per_page'] ?? 15,
+            page: $data['page'] ?? 1,
+            country: $data['country'] ?? null,
+            city: $data['city'] ?? null,
+            search: $data['search'] ?? null
+        );
+    }
 }

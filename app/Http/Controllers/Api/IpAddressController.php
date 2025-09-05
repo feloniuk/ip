@@ -36,7 +36,8 @@ class IpAddressController extends Controller
      */
     public function index(IndexIpAddressRequest $request): AnonymousResourceCollection
     {
-        $ipAddresses = $this->ipService->getAll(new IndexIpData($request->validated()));
+        // $ipAddresses = $this->ipService->getAll(IndexIpData::from($request->validated()));
+        $ipAddresses = $this->ipService->getAll(new IndexIpData(...$request->validationData()));
         return IpAddressResource::collection($ipAddresses);
     }
 
@@ -61,9 +62,9 @@ class IpAddressController extends Controller
     /**
      * PUT/PATCH /api/v1/ip-addresses/{id}
      */
-    public function update(UpdateIpAddressRequest $request, int $id): IpAddressResource
+    public function update(UpdateIpAddressRequest $request): IpAddressResource
     {
-        $updatedIp = $this->ipService->update(new UpdateIpData($request->get('ip_address'), $id));
+        $updatedIp = $this->ipService->update(new UpdateIpData($request->get('ip_address'), $request->getValidatedId()));
         return new IpAddressResource($updatedIp);
     }
 

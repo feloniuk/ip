@@ -11,17 +11,13 @@ use Illuminate\Contracts\Config\Repository as ConfigRepository;
 use Illuminate\Contracts\Validation\Factory as ValidationFactory;
 use Psr\Log\LoggerInterface;
 use Maatwebsite\Excel\Excel as ExcelWriter;
-use App\Exceptions\GeoLocationException;
-
 
 class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->bind(GeoLocationApiInterface::class, GeoLocationApi::class);
-
-        $this->app->bind(\App\Services\GeoLocationApiService::class, function ($app) {
-            return new \App\Services\GeoLocationApiService(
+        $this->app->bind(GeoLocationApiInterface::class, function ($app) {
+            return new GeoLocationApi(
                 $app->make(HttpFactory::class),
                 $app->make(ConfigRepository::class)
             );
@@ -29,8 +25,7 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->bind(\App\Services\GeoLocationService::class, function ($app) {
             return new \App\Services\GeoLocationService(
-                $app->make(GeoLocationApiInterface::class),
-                $app->make(GeoLocationException::class)
+                $app->make(GeoLocationApiInterface::class)
             );
         });
 
@@ -44,7 +39,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(\App\Services\AuthService::class, function ($app) {
             return new \App\Services\AuthService(
                 $app->make(LoggerInterface::class),
-                $app->make('Illuminate\Contracts\Validation\Factory')
+                $app->make(ValidationFactory::class)
             );
         });
 

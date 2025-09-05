@@ -10,8 +10,6 @@ use App\DTOs\UpdateIpData;
 use App\DTOs\IndexIpData;
 use App\DTOs\IdIpData;
 use App\Models\IpAddress;
-use App\Http\Requests\StoreIpAddressRequest;
-use App\Http\Requests\UpdateIpAddressRequest;
 use App\Http\Requests\IndexIpAddressRequest;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -35,24 +33,23 @@ final class IpService
         return $this->ipAddress->query()->create($geoData->toArray());
     }
 
-    public function getAll(IndexIpAddressRequest $request): LengthAwarePaginator
+    public function getAll(IndexIpData $request): LengthAwarePaginator
     {
-        $filters = IndexIpData::from($request);
         $query = new IpAddress();
 
-        if ($filters->country) {
-            $query = $query->byCountry($filters->country);
+        if ($request->country) {
+            $query = $query->byCountry($request->country);
         }
 
-        if ($filters->city) {
-            $query = $query->byCity($filters->city);
+        if ($request->city) {
+            $query = $query->byCity($request->city);
         }
 
-        if ($filters->search) {
-            $query = $query->search($filters->search);
+        if ($request->search) {
+            $query = $query->search($request->search);
         }
 
-        return $query->latest('created_at')->paginate($filters->per_page);
+        return $query->latest('created_at')->paginate($request->per_page);
     }
 
     public function getById(IdIpData $data): IpAddress
@@ -68,7 +65,7 @@ final class IpService
 
     public function update(UpdateIpData $data): IpAddress
     {
-        $ipAddress = $this->getById($data->id);
+        $ipAddress = $this->getById(new IdIpData($data->id));
 
         if ($data->ip_address && $data->ip_address !== $ipAddress->ip_address) {
             $geoData = $this->geoService->getGeoLocation($data->ip_address);
@@ -85,7 +82,7 @@ final class IpService
 
     public function delete(IdIpData $data): bool
     {
-        $ipAddress = $this->getById($data->id);
+        $ipAddress = $this->getById(new IdIpData($data->id));
         return (bool) $ipAddress->delete();
     }
 }

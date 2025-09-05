@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\DTOs\UpdateIpData;
 use App\DTOs\StoreIpData;
+use App\DTOs\IndexIpData;
 use App\DTOs\IdIpData;
 use App\Http\Requests\StoreIpAddressRequest;
 use App\Http\Requests\UpdateIpAddressRequest;
@@ -35,7 +36,7 @@ class IpAddressController extends Controller
      */
     public function index(IndexIpAddressRequest $request): AnonymousResourceCollection
     {
-        $ipAddresses = $this->ipService->getAll($request);
+        $ipAddresses = $this->ipService->getAll(new IndexIpData($request->validated()));
         return IpAddressResource::collection($ipAddresses);
     }
 

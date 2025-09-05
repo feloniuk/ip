@@ -16,7 +16,7 @@ class UpdateIpAddressRequest extends FormRequest
     public function prepareForValidation(): void
     {
         $this->merge([
-            'id' => (int) $this->route('id')
+            'id' => $this->route('id')
         ]);
     }
 
@@ -26,10 +26,5 @@ class UpdateIpAddressRequest extends FormRequest
             'ip_address' => ['sometimes', 'string', 'ip'],
             'id' => ['required', 'integer']
         ];
-    }
-
-    public function getValidatedId(): int
-    {
-        return $this->validated()['id'];
     }
 }

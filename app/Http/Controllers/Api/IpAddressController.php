@@ -46,7 +46,7 @@ class IpAddressController extends Controller
      */
     public function store(StoreIpAddressRequest $request): IpAddressResource
     {
-        $ip = $this->ipService->store(new StoreIpData($request->get('ip_address')));
+        $ip = $this->ipService->store(new StoreIpData($request->validated('ip_address')));
         return new IpAddressResource($ip);
     }
 
@@ -55,7 +55,7 @@ class IpAddressController extends Controller
      */
     public function show(ShowIpAddressRequest $request): IpAddressResource
     {
-        $ipAddress = $this->ipService->getById($request->get('ip_address'));
+        $ipAddress = $this->ipService->getById($request->validated('ip_address'));
         return new IpAddressResource($ipAddress);
     }
 
@@ -64,7 +64,7 @@ class IpAddressController extends Controller
      */
     public function update(UpdateIpAddressRequest $request): IpAddressResource
     {
-        $updatedIp = $this->ipService->update(new UpdateIpData($request->get('ip_address'), $request->getValidatedId()));
+        $updatedIp = $this->ipService->update(new UpdateIpData($request->validated('ip_address'), $request->validated('id')));
         return new IpAddressResource($updatedIp);
     }
 
@@ -74,7 +74,7 @@ class IpAddressController extends Controller
     public function destroy(DeleteIpAddressRequest $request): JsonResponse
     {
         $this->ipService->delete(
-            new IdIpData($request->getValidatedId())
+            new IdIpData($request->validated('id'))
         );
 
         return $this->response->json([

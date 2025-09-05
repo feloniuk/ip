@@ -67,7 +67,7 @@ final class IpService
     {
         $ipAddress = $this->getById(new IdIpData($data->id));
 
-        if ($data->ip_address && $data->ip_address !== $ipAddress->ip_address) {
+        if ($data->ip_address && (($data->ip_address !== $ipAddress->ip_address) || (!$ipAddress->country || !$ipAddress->city))) {
             $geoData = $this->geoService->getGeoLocation($data->ip_address);
 
             $ipAddress->update([
@@ -75,6 +75,10 @@ final class IpService
                 'country' => $geoData->country,
                 'city' => $geoData->city,
             ]);
+        }
+
+        if(!$ipAddress->country || !$ipAddress->city) {
+            $geoData = $this->geoService->getGeoLocation($data->ip_address);
         }
 
         return $ipAddress->refresh();

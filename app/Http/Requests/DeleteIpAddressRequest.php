@@ -16,7 +16,7 @@ class DeleteIpAddressRequest extends FormRequest
     public function prepareForValidation(): void
     {
         $this->merge([
-            'id' => (int) $this->route('id')
+            'id' => $this->route('id')
         ]);
     }
 
@@ -25,10 +25,5 @@ class DeleteIpAddressRequest extends FormRequest
         return [
             'id' => ['required', 'integer', 'min:1', 'exists:ip_addresses,id']
         ];
-    }
-
-    public function getValidatedId(): int
-    {
-        return $this->validated()['id'];
     }
 }

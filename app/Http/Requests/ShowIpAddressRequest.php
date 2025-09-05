@@ -16,7 +16,7 @@ class ShowIpAddressRequest extends FormRequest
     public function prepareForValidation(): void
     {
         $this->merge([
-            'id' => (int) $this->route('id')
+            'id' => $this->route('id')
         ]);
     }
 
@@ -25,10 +25,5 @@ class ShowIpAddressRequest extends FormRequest
         return [
             'id' => ['required', 'integer', 'min:1']
         ];
-    }
-
-    public function getValidatedId(): int
-    {
-        return $this->validated()['id'];
     }
 }
